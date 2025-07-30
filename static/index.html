@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Go TTS App</title>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    button { margin: 0.5rem 0.5rem 0.5rem 0; }
+    #history li:hover { cursor: pointer; background-color: #eee; }
+  </style>
+</head>
+<body>
+  <h1>Go TTS App</h1>
+  <input id="text" type="text" placeholder="Type here..." style="width: 300px;" />
+  <select id="voice"></select>
+  <button onclick="previewVoice()">Preview Voice</button>
+  <button onclick="sendText()">Speak</button>
+  <button onclick="fetchHistory()">Show Recent</button>
+  <ul id="history"></ul>
+  <audio id="player" controls></audio>
+
+<script>
+  const elevenVoices = [
+    { id: "pNInz6obpgDQGcFmaJgB", name: "Boris (ElevenLabs)" },
+    { id: "EXAVITQu4vr4xnSDxMaL", name: "Bella" },
+    { id: "ErXwobaYiN019PkySvjV", name: "Antoni" },
+    { id: "21m00Tcm4TlvDq8ikWAM", name: "Rachel" },
+    { id: "AZnzlk1XvdvUeBnXmlld", name: "Domi" },
+  ];
+
+  async function loadVoices() {
+    const select = document.getElementById("voice");
+    select.innerHTML = "";
+
+    // ElevenLabs group
+    const optgroup1 = document.createElement("optgroup");
+    optgroup1.label = "ElevenLabs Voices";
+    elevenVoices.forEach(voice => {
+      const option = document.createElement("option");
+      option.value = `eleven:${voice.id}`;
+      option.textContent = voice.name;
+      optgroup1.appendChild(option);
+    });
+    select.appendChild(optgroup1);
+
+    // espeak-ng group
+    const res = await fetch("/api/voices");
+    const text = await res.text();
+    const lines = text.trim().split("\n").slice(1);
+    const optgroup2 = document.createElement("optgroup");
+    optgroup2.label = "Espeak-NG Voices";
+
+    lines.forEach(line => {
+      const parts = line.trim().split(/\s+/);
+      const lang = parts[1];
+      const name = parts[3];
+      const option = document.createElement("option");
+      option.value = lang;
+      option.textContent = `${lang} - ${name}`;
+      optgroup2.appendChild(option);
+    });
+    select.appendChild(optgroup2);
+  }
+
+  async function sendText() {
+    const text = document.getElementById("text").value;
+    const voice = document.getElementById("voice").value;
+    if (!text) return;
+    const res = await fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, voice }),
+    });
+    const blob = await res.blob();
+    const audioUrl = URL.createObjectURL(blob);
+    const player = document.getElementById("player");
+    player.src = audioUrl;
+    player.play();
+  }
+
+  async function previewVoice() {
+    const voice = document.getElementById("voice").value;
+    const previewText = "This is a voice preview.";
+    const player = document.getElementById("player");
+
+    if (voice.startsWith("eleven:")) {
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: previewText, voice }),
+      });
+      const blob = await res.blob();
+      player.src = URL.createObjectURL(blob);
+    } else {
+      player.src = `/api/preview?voice=${voice}`;
+    }
+    player.play();
+  }
+
+  async function fetchHistory() {
+    const res = await fetch("/api/history");
+    const history = await res.json();
+    const list = document.getElementById("history");
+    list.innerHTML = "";
+    history.slice().reverse().forEach(item => {
+      const li = document.createElement("li");
+      li.textContent = item;
+      li.onclick = () => {
+        document.getElementById("text").value = item;
+        sendText();
+      };
+      list.appendChild(li);
+    });
+  }
+
+  loadVoices();
+</script>
+</body>
+</html>
