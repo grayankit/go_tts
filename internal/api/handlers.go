@@ -81,4 +81,5 @@ func RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/events", sse.EventsHandler)
 	mux.HandleFunc("/api/speak", sse.SpeakHandler)
 	mux.HandleFunc("/api/queue", sse.GetQueueHandler)
+	mux.HandleFunc("/api/pause", sse.PauseHandler)
 }
