@@ -21,10 +21,14 @@ type TTSRequest struct {
 }
 
 var (
-	mu        sync.Mutex
-	history   []string
-	clients   = make(map[chan string]bool)
-	clientsMu sync.Mutex
+	mu           sync.Mutex
+	history      []string
+	clients      = make(map[chan string]bool)
+	clientsMu    sync.Mutex
+	messageQueue []string
+	queueMu      sync.Mutex
+	frontedReady bool
+	isPaused     bool
 )
 
 func synthesizeSpeech(text, voice string) ([]byte, error) {
@@ -141,10 +145,22 @@ func eventsHandler(w http.ResponseWriter, r *http.Request) {
 	clientsMu.Lock()
 	clients[msgChan] = true
 	clientsMu.Unlock()
+	queueMu.Lock()
+	frontedReady = true
+
+	for _, msg := range messageQueue {
+		msgChan <- msg
+	}
+	messageQueue = nil
+	queueMu.Unlock()
+
 	defer func() {
 		clientsMu.Lock()
 		delete(clients, msgChan)
 		clientsMu.Unlock()
+		queueMu.Lock()
+		frontedReady = false
+		queueMu.Unlock()
 		close(msgChan)
 	}()
 
@@ -160,6 +176,12 @@ func eventsHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 func broadcast(text string) {
+	queueMu.Lock()
+	defer queueMu.Unlock()
+	if !frontedReady || isPaused {
+		messageQueue = append(messageQueue, text)
+		return
+	}
 	clientsMu.Lock()
 	defer clientsMu.Unlock()
 	for ch := range clients {

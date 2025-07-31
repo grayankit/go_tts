@@ -21,6 +21,7 @@
       <button onclick="previewVoice()" class="flex-1 px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-transform transform hover:scale-105">Preview</button>
       <button onclick="sendText()" class="flex-1 px-6 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-transform transform hover:scale-105">Speak</button>
       <button onclick="fetchHistory()" class="flex-1 px-6 py-3 bg-gray-600 text-white font-bold rounded-xl hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition-transform transform hover:scale-105">History</button>
+      <button onclick="togglePause()" class="flex-1 px-6 py-3 bg-gray-600 text-white font-bold rounded-xl hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition-transform transform hover:scale-105">Play/Pause</button>
     </div>
 
     <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 shadow-inner">
@@ -32,6 +33,8 @@
   </main>
 
 <script>
+    let isPaused = false;
+const queue = [];
   const elevenVoices = [
     { id: "pNInz6obpgDQGcFmaJgB", name: "Boris (ElevenLabs)" },
     { id: "EXAVITQu4vr4xnSDxMaL", name: "Bella" },
@@ -128,10 +131,27 @@
 
 evtSource.onmessage = (e) => {
   const text = e.data;
+    if(isPaused){
+      queue.push(text)
+    }else{
+      playText(text)
+    }
+}
+function togglePause() {
+  isPaused = !isPaused;
+  if (!isPaused) {
+    while (queue.length > 0) {
+      const text = queue.shift();
+      playText(text);
+    }
+  }
+}
+  function playText(text) {
   const voice = document.getElementById("voice").value;
   document.getElementById("text").value = text;
-  sendText();
-};
+  sendText(); // your playback function
+}
+
 
 
   loadVoices();
