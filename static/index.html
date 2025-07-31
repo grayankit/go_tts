@@ -30,6 +30,8 @@
     </div>
 
     <audio id="player" controls class="w-full mt-8"></audio>
+      <h3>Queue</h3>
+      <ul id="queue-list"></ul>
   </main>
 
 <script>
@@ -133,6 +135,7 @@ evtSource.onmessage = (e) => {
   const text = e.data;
     if(isPaused){
       queue.push(text)
+        refreshQueue();
     }else{
       playText(text)
     }
@@ -151,6 +154,25 @@ function togglePause() {
   document.getElementById("text").value = text;
   sendText(); // your playback function
 }
+    async function refreshQueue() {
+  const res = await fetch('/api/queue');
+  const data = await res.json(); // array of text or {text, voice}
+      console.log(data)
+
+  const ul = document.getElementById('queue-list');
+  ul.innerHTML = '';
+
+  data.forEach((item, idx) => {
+    const li = document.createElement('li');
+    if (typeof item === 'string') {
+      li.textContent = item;
+    } else {
+      li.textContent = `${item.voice}: ${item.text}`;
+    }
+    ul.appendChild(li);
+  });
+}
+
 
 
 

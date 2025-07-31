@@ -206,6 +206,13 @@ func speakHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(204)
 }
 
+func getQueueHandler(w http.ResponseWriter, r *http.Request) {
+	queueMu.Lock()
+	defer queueMu.Unlock()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(messageQueue)
+}
+
 func main() {
 	http.Handle("/", http.FileServer(http.Dir("static")))
 	http.HandleFunc("/api/tts", ttsHandler)
@@ -214,6 +221,7 @@ func main() {
 	http.HandleFunc("/api/preview", previewHandler)
 	http.HandleFunc("/events", eventsHandler)
 	http.HandleFunc("/api/speak", speakHandler)
+	http.HandleFunc("/api/queue", getQueueHandler)
 
 	fmt.Println("Listening on port 3001 for tts")
 	http.ListenAndServe(":3001", nil)
