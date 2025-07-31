@@ -11,23 +11,23 @@
       <h1 class="text-5xl font-extrabold text-gray-800 dark:text-white">Go Text-to-Speech</h1>
       <p class="text-gray-600 dark:text-gray-400 mt-2">Instantly convert your text into natural-sounding speech.</p>
     </header>
-    
+
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
       <input id="text" type="text" placeholder="Type something to say..." class="md:col-span-2 p-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-gray-50 dark:bg-gray-700 text-lg" />
       <select id="voice" class="p-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-gray-50 dark:bg-gray-700 text-lg"></select>
     </div>
-    
+
     <div class="flex gap-4 mb-6 justify-center">
       <button onclick="previewVoice()" class="flex-1 px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-transform transform hover:scale-105">Preview</button>
       <button onclick="sendText()" class="flex-1 px-6 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-transform transform hover:scale-105">Speak</button>
       <button onclick="fetchHistory()" class="flex-1 px-6 py-3 bg-gray-600 text-white font-bold rounded-xl hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition-transform transform hover:scale-105">History</button>
     </div>
-    
+
     <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 shadow-inner">
       <h2 class="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-200">Recent Items</h2>
       <ul id="history" class="w-full list-none max-h-48 overflow-y-auto space-y-2"></ul>
     </div>
-    
+
     <audio id="player" controls class="w-full mt-8"></audio>
   </main>
 
@@ -124,6 +124,15 @@
       list.appendChild(li);
     });
   }
+  const evtSource = new EventSource("/events");
+
+evtSource.onmessage = (e) => {
+  const text = e.data;
+  const voice = document.getElementById("voice").value;
+  document.getElementById("text").value = text;
+  sendText();
+};
+
 
   loadVoices();
 </script>

@@ -21,8 +21,10 @@ type TTSRequest struct {
 }
 
 var (
-	mu      sync.Mutex
-	history []string
+	mu        sync.Mutex
+	history   []string
+	clients   = make(map[chan string]bool)
+	clientsMu sync.Mutex
 )
 
 func synthesizeSpeech(text, voice string) ([]byte, error) {
@@ -124,6 +126,63 @@ func elevenLabsTTS(text, voiceID string) ([]byte, error) {
 
 	return io.ReadAll(resp.Body)
 }
+func eventsHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Request called")
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "Streaming Unsupported", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	msgChan := make(chan string)
+	clientsMu.Lock()
+	clients[msgChan] = true
+	clientsMu.Unlock()
+	defer func() {
+		clientsMu.Lock()
+		delete(clients, msgChan)
+		clientsMu.Unlock()
+		close(msgChan)
+	}()
+
+	for {
+		select {
+		case msg := <-msgChan:
+			fmt.Fprintf(w, "data: %s\n\n", msg)
+			flusher.Flush()
+		case <-r.Context().Done():
+			return
+		}
+	}
+
+}
+func broadcast(text string) {
+	clientsMu.Lock()
+	defer clientsMu.Unlock()
+	for ch := range clients {
+		select {
+		case ch <- text:
+		default:
+			log.Println("Dropped slow clients")
+		}
+	}
+}
+func speakHandler(w http.ResponseWriter, r *http.Request) {
+	var data struct {
+		Text  string `json:"text"`
+		Voice string `json:"voice"`
+	}
+	json.NewDecoder(r.Body).Decode(&data)
+	if data.Text == "" {
+		http.Error(w, "Missing text", http.StatusBadRequest)
+		return
+	}
+	broadcast(data.Text)
+	w.WriteHeader(204)
+}
 
 func main() {
 	http.Handle("/", http.FileServer(http.Dir("static")))
@@ -131,6 +190,8 @@ func main() {
 	http.HandleFunc("/api/history", historyHandler)
 	http.HandleFunc("/api/voices", voicesHandler)
 	http.HandleFunc("/api/preview", previewHandler)
+	http.HandleFunc("/events", eventsHandler)
+	http.HandleFunc("/api/speak", speakHandler)
 
 	fmt.Println("Listening on port 3001 for tts")
 	http.ListenAndServe(":3001", nil)
