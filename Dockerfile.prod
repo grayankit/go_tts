@@ -1,0 +1,25 @@
+FROM golang:1.24.5-alpine AS builder
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY cmd/go_tts/main.go ./cmd/go_tts/main.go
+COPY internal ./internal
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /app/main ./cmd/go_tts
+
+FROM node:20-alpine AS frontend
+WORKDIR /app
+COPY package.json .
+RUN npm install
+COPY input.css .
+COPY tailwind.config.js .
+COPY static/ ./static/
+RUN npm run css:build
+
+FROM alpine:latest
+WORKDIR /app
+COPY --from=builder /app/main .
+COPY --from=frontend /app/static/ /app/static/
+COPY --from=buildder .env ./
+
+EXPOSE 3001
+CMD ["/app/main"]

@@ -1,0 +1,21 @@
+
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -o ./tmp/main ./cmd/go_tts"
+  bin = "./tmp/main"
+  full_bin = "APP_ENV=dev ./tmp/main"
+  delay = 1000 # ms
+  include_ext = ["go", "tpl", "tmpl", "html", "css"]
+  exclude_dir = ["assets", "tmp", "vendor", "frontend/node_modules"]
+  include_dir = []
+  exclude_file = []
+  log = "air.log"
+  follow_symlink = true
+
+[log]
+  time = true
+
+[misc]
+  clean_on_exit = true

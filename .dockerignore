@@ -1,0 +1,11 @@
+.git
+.gitignore
+node_modules
+tmp
+air.log
+Dockerfile.dev
+Dockerfile.prod
+docker-compose.yml
+.air.toml
+bun.lock
+.dockerignore
