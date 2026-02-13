@@ -42,7 +42,7 @@ func elevenLabsTTS(text, voiceID string) ([]byte, error) {
 	url := fmt.Sprintf("https://api.elevenlabs.io/v1/text-to-speech/%s", voiceID)
 	payload := map[string]any{
 		"text":     text,
-		"model_id": "eleven_monolingual_v1",
+		"model_id": "eleven_multilingual_v2",
 		"voice_settings": map[string]any{
 			"stability":        0.5,
 			"similarity_boost": 0.75,
