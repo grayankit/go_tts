@@ -33,12 +33,41 @@ To get a local copy up and running follow these simple example steps.
    ```
 3. **Build the CSS**
    ```sh
-   npm run build:css
+   npm run css:build
    ```
 4. **Run the application**
    ```sh
    go run cmd/go_tts/main.go
    ```
+
+## Docker
+
+This project includes a Docker setup for both development and production environments.
+
+### Prerequisites
+
+- [Docker](https://www.docker.com/get-started)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+
+### Development
+
+The development environment is configured with hot-reloading for both the Go backend and the frontend assets. To start the development environment, run:
+
+```sh
+docker-compose up dev
+```
+
+The application will be available at `http://localhost:3001`.
+
+### Production
+
+The production environment is an optimized, multi-stage build. To build and run the production environment, use:
+
+```sh
+docker-compose up prod
+```
+
+The application will be available at `http://localhost:3001`.
 
 ## Usage
 

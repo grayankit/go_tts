@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3001:3001"
+    volumes:
+      - .:/app
+    environment:
+      - ELEVEN_API_KEY=${ELEVEN_API_KEY}
+    command: >
+      sh -c "npm run css:dev & air"
+
+  prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    ports:
+      - "3001:3001"
+    environment:
+      - ELEVEN_API_KEY=${ELEVEN_API_KEY}

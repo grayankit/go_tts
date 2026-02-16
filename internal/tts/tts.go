@@ -34,7 +34,7 @@ func SynthesizeSpeech(text, voice string) ([]byte, error) {
 func elevenLabsTTS(text, voiceID string) ([]byte, error) {
 	errEnv := godotenv.Load()
 	if errEnv != nil {
-		log.Fatal("Error Loading .env file")
+		log.Println("Error loading .env file, will use environment variables")
 	}
 
 	apiKey := os.Getenv("ELEVEN_API_KEY")

@@ -1,0 +1,22 @@
+
+FROM golang:1.24.5-alpine
+
+WORKDIR /app
+
+RUN go install github.com/cosmtrek/air@v1.51.0
+
+RUN apk add --update nodejs npm
+
+COPY package.json .
+RUN npm install
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+RUN npm run css:build
+
+EXPOSE 3001
+
+CMD ["air"]
